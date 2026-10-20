@@ -1,18 +1,249 @@
+File 1: Create src/test/java/pages/ProductsPage.java
+package pages;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class ProductsPage {
+    WebDriver driver;
+    WebDriverWait wait;
+
+    private By searchInput = By.id("search_product");
+    private By searchBtn = By.id("submit_search");
+    private By productNames = By.cssSelector(".productinfo p");
+    private By addToCartBtns = By.cssSelector(".productinfo .add-to-cart");
+    private By continueShoppingBtn = By.cssSelector(".btn-success");
+    private By viewCartModalLink = By.cssSelector("u");
+
+    public ProductsPage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void searchProduct(String name) {
+        WebElement input = wait.until(ExpectedConditions.visibilityOfElementLocated(searchInput));
+        input.clear();
+        input.sendKeys(name);
+        driver.findElement(searchBtn).click();
+    }
+
+    public List<String> getSearchedProductNames() {
+        List<WebElement> elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(productNames));
+        return elements.stream().map(WebElement::getText).collect(Collectors.toList());
+    }
+
+    public void addProductToCartByIndex(int index) {
+        List<WebElement> buttons = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(addToCartBtns));
+        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", buttons.get(index));
+    }
+
+    public void clickContinueShopping() {
+        wait.until(ExpectedConditions.elementToBeClickable(continueShoppingBtn)).click();
+    }
+
+    public void openCartFromModal() {
+        wait.until(ExpectedConditions.elementToBeClickable(viewCartModalLink)).click();
+    }
+}
+
+
+File 2: Create src/test/java/pages/CartPage.java
+
+package pages;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class CartPage {
+    WebDriver driver;
+    WebDriverWait wait;
+
+    private By productDescriptions = By.cssSelector(".cart_description h4");
+    private By deleteBtns = By.cssSelector(".cart_quantity_delete");
+    private By proceedToCheckoutBtn = By.cssSelector(".check_out");
+
+    public CartPage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public List<String> getCartProductNames() {
+        List<WebElement> elements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(productDescriptions));
+        return elements.stream().map(WebElement::getText).collect(Collectors.toList());
+    }
+
+    public void removeProductByIndex(int index) {
+        List<WebElement> buttons = driver.findElements(deleteBtns);
+        buttons.get(index).click();
+    }
+
+    public void proceedToCheckout() {
+        wait.until(ExpectedConditions.elementToBeClickable(proceedToCheckoutBtn)).click();
+    }
+}
+
+
+File 3: Create src/test/java/pages/CheckoutPage.java
+
+
+
+package pages;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
+
+public class CheckoutPage {
+    WebDriver driver;
+    WebDriverWait wait;
+
+    private By placeOrderBtn = By.cssSelector("a[href='/payment']");
+    private By nameOnCard = By.cssSelector("input[data-qa='name-on-card']");
+    private By cardNumber = By.cssSelector("input[data-qa='card-number']");
+    private By cvc = By.cssSelector("input[data-qa='cvc']");
+    private By expiryMonth = By.cssSelector("input[data-qa='expiry-month']");
+    private By expiryYear = By.cssSelector("input[data-qa='expiry-year']");
+    private By payBtn = By.cssSelector("button[data-qa='pay-button']");
+    private By successMsg = By.cssSelector("p[style*='color']");
+
+    public CheckoutPage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void clickPlaceOrder() {
+        wait.until(ExpectedConditions.elementToBeClickable(placeOrderBtn)).click();
+    }
+
+    public void enterPaymentDetails(String name, String card, String cvcCode, String month, String year) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(nameOnCard)).sendKeys(name);
+        driver.findElement(cardNumber).sendKeys(card);
+        driver.findElement(cvc).sendKeys(cvcCode);
+        driver.findElement(expiryMonth).sendKeys(month);
+        driver.findElement(expiryYear).sendKeys(year);
+        driver.findElement(payBtn).click();
+    }
+
+    public String getSuccessText() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(successMsg)).getText();
+    }
+}
+
+File 4: Create src/test/java/tests/ShoppingWorkflowTest.java
+
 package tests;
 
 import base.BaseTest;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import pages.HomePage;
+import pages.*;
 
-public class HomepageTest extends BaseTest {
+import java.util.List;
+
+public class ShoppingWorkflowTest extends BaseTest {
 
     @Test
-    public void verifyHomePageLoads() {
-        HomePage homePage = new HomePage(driver);
-        
-        // 16. Open the website and verify that the home page loads[cite: 1]
-        homePage.open();
-        Assert.assertTrue(homePage.isHomePageLoaded(), "Home page failed to load!");
+    public void testFullShoppingWorkflow() throws InterruptedException {
+        HomePage home = new HomePage(driver);
+        SignupLoginPage signup = new SignupLoginPage(driver);
+        ProductsPage products = new ProductsPage(driver);
+        CartPage cart = new CartPage(driver);
+        CheckoutPage checkout = new CheckoutPage(driver);
+
+        // 16. Open website & verify home page load
+        home.open();
+        Assert.assertTrue(home.isHomePageLoaded(), "Home page failed to load!");
+
+        // 17 & 18. Register and authenticate
+        home.goToSignupLogin();
+        String email = "test_" + System.currentTimeMillis() + "@test.com";
+        signup.initiateSignup("Duduri", email);
+        signup.fillAccountDetails("Pass123", "Duduri", "Shivakumar", "123 St", "Telangana", "Hyderabad", "500001", "9876543210");
+        signup.clickContinue();
+
+        // 19 & 20. Open Products and search for an item
+        driver.get("https://automationexercise.com/products");
+        products.searchProduct("Top");
+        List<String> searchResults = products.getSearchedProductNames();
+        Assert.assertFalse(searchResults.isEmpty(), "No items found!");
+
+        // 21. Add two different products to cart
+        products.addProductToCartByIndex(0);
+        products.clickContinueShopping();
+        products.addProductToCartByIndex(1);
+        products.clickContinueShopping();
+
+        // 22. Add third product
+        products.searchProduct("Shirt");
+        products.addProductToCartByIndex(0);
+        products.openCartFromModal();
+
+        // 23. Verify all 3 products in cart
+        List<String> items = cart.getCartProductNames();
+        Assert.assertEquals(items.size(), 3, "Cart item count incorrect!");
+
+        // 24. Remove one product and verify update
+        cart.removeProductByIndex(0);
+        Thread.sleep(1500);
+        Assert.assertEquals(cart.getCartProductNames().size(), 2, "Failed to remove item from cart!");
+
+        // 25 & 26. Complete order & verify confirmation
+        cart.proceedToCheckout();
+        checkout.clickPlaceOrder();
+        checkout.enterPaymentDetails("Duduri", "4111222233334444", "123", "12", "2028");
+        Assert.assertTrue(checkout.getSuccessText().contains("Congratulations"), "Order failed!");
+
+        // 27. Log out and verify logged-out state
+        home.logout();
+        home.goToSignupLogin();
+        Assert.assertTrue(driver.getPageSource().contains("Login to your account"), "Logout verification failed!");
+    }
+
+    // --- Additional Challenge: Data-Driven Search Test ---
+    @DataProvider(name = "searchKeywords")
+    public Object[][] getKeywords() {
+        return new Object[][]{ {"Top"}, {"Jeans"}, {"Shirt"} };
+    }
+
+    @Test(dataProvider = "searchKeywords")
+    public void testDataDrivenSearch(String keyword) {
+        HomePage home = new HomePage(driver);
+        ProductsPage products = new ProductsPage(driver);
+
+        home.open();
+        driver.get("https://automationexercise.com/products");
+        products.searchProduct(keyword);
+        Assert.assertFalse(products.getSearchedProductNames().isEmpty(), "No results for " + keyword);
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
