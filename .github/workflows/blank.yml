@@ -6,37 +6,56 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
-public class HomePage {
+public class SignupLoginPage {
     WebDriver driver;
     WebDriverWait wait;
 
-    private By homeLogo = By.cssSelector("img[alt='Website for automation practice']");
-    private By signupLoginBtn = By.cssSelector("a[href='/login']");
-    private By loggedInUser = By.cssSelector("a b");
-    private By logoutBtn = By.cssSelector("a[href='/logout']");
+    private By nameField = By.cssSelector("input[data-qa='signup-name']");
+    private By emailField = By.cssSelector("input[data-qa='signup-email']");
+    private By signupBtn = By.cssSelector("button[data-qa='signup-button']");
 
-    public HomePage(WebDriver driver) {
+    private By titleMr = By.id("id_gender1");
+    private By passwordField = By.id("password");
+    private By firstName = By.id("first_name");
+    private By lastName = By.id("last_name");
+    private By address = By.id("address1");
+    private By state = By.id("state");
+    private By city = By.id("city");
+    private By zipcode = By.id("zipcode");
+    private By mobileNumber = By.id("mobile_number");
+    private By createAccountBtn = By.cssSelector("button[data-qa='create-account']");
+    private By accountCreatedMsg = By.cssSelector("h2[data-qa='account-created']");
+    private By continueBtn = By.cssSelector("a[data-qa='continue-button']");
+
+    public SignupLoginPage(WebDriver driver) {
         this.driver = driver;
         this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
     }
 
-    public void open() {
-        driver.get("https://automationexercise.com/");
+    public void initiateSignup(String name, String email) {
+        wait.until(ExpectedConditions.visibilityOfElementLocated(nameField)).sendKeys(name);
+        driver.findElement(emailField).sendKeys(email);
+        driver.findElement(signupBtn).click();
     }
 
-    public boolean isHomePageLoaded() {
-        return wait.until(ExpectedConditions.presenceOfElementLocated(homeLogo)).isDisplayed();
+    public void fillAccountDetails(String pwd, String fName, String lName, String addr, String st, String cit, String zip, String mobile) {
+        wait.until(ExpectedConditions.elementToBeClickable(titleMr)).click();
+        driver.findElement(passwordField).sendKeys(pwd);
+        driver.findElement(firstName).sendKeys(fName);
+        driver.findElement(lastName).sendKeys(lName);
+        driver.findElement(address).sendKeys(addr);
+        driver.findElement(state).sendKeys(st);
+        driver.findElement(city).sendKeys(cit);
+        driver.findElement(zipcode).sendKeys(zip);
+        driver.findElement(mobileNumber).sendKeys(mobile);
+        driver.findElement(createAccountBtn).click();
     }
 
-    public void goToSignupLogin() {
-        wait.until(ExpectedConditions.elementToBeClickable(signupLoginBtn)).click();
+    public boolean isAccountCreated() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(accountCreatedMsg)).getText().equalsIgnoreCase("ACCOUNT CREATED!");
     }
 
-    public String getLoggedInUsername() {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(loggedInUser)).getText();
-    }
-
-    public void logout() {
-        wait.until(ExpectedConditions.elementToBeClickable(logoutBtn)).click();
+    public void clickContinue() {
+        wait.until(ExpectedConditions.elementToBeClickable(continueBtn)).click();
     }
 }
