@@ -1,0 +1,42 @@
+package pages;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
+
+public class HomePage {
+    WebDriver driver;
+    WebDriverWait wait;
+
+    private By homeLogo = By.cssSelector("img[alt='Website for automation practice']");
+    private By signupLoginBtn = By.cssSelector("a[href='/login']");
+    private By loggedInUser = By.cssSelector("a b");
+    private By logoutBtn = By.cssSelector("a[href='/logout']");
+
+    public HomePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
+
+    public void open() {
+        driver.get("https://automationexercise.com/");
+    }
+
+    public boolean isHomePageLoaded() {
+        return wait.until(ExpectedConditions.presenceOfElementLocated(homeLogo)).isDisplayed();
+    }
+
+    public void goToSignupLogin() {
+        wait.until(ExpectedConditions.elementToBeClickable(signupLoginBtn)).click();
+    }
+
+    public String getLoggedInUsername() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(loggedInUser)).getText();
+    }
+
+    public void logout() {
+        wait.until(ExpectedConditions.elementToBeClickable(logoutBtn)).click();
+    }
+}
