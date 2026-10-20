@@ -1,37 +1,42 @@
-package tests;
+package pages;
 
-import base.BaseTest;
-import org.testng.Assert;
-import org.testng.annotations.Test;
-import pages.HomePage;
-import pages.SignupLoginPage;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+import java.time.Duration;
 
-public class RegistrationTest extends BaseTest {
+public class HomePage {
+    WebDriver driver;
+    WebDriverWait wait;
 
-    @Test
-    public void verifyUserRegistrationAndLogin() {
-        HomePage homePage = new HomePage(driver);
-        SignupLoginPage signupLoginPage = new SignupLoginPage(driver);
+    private By homeLogo = By.cssSelector("img[alt='Website for automation practice']");
+    private By signupLoginBtn = By.cssSelector("a[href='/login']");
+    private By loggedInUser = By.cssSelector("a b");
+    private By logoutBtn = By.cssSelector("a[href='/logout']");
 
-        // 16. Open the website and verify that the home page loads[cite: 1]
-        homePage.open();
-        Assert.assertTrue(homePage.isHomePageLoaded(), "Home page did not load!");
+    public HomePage(WebDriver driver) {
+        this.driver = driver;
+        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+    }
 
-        // 17. Navigate to Signup/Login and create a unique test account[cite: 1]
-        homePage.goToSignupLogin();
-        String uniqueEmail = "user_" + System.currentTimeMillis() + "@test.com";
-        signupLoginPage.initiateSignup("Duduri", uniqueEmail);
+    public void open() {
+        driver.get("https://automationexercise.com/");
+    }
 
-        signupLoginPage.fillAccountDetails(
-            "Password123", "Duduri", "Shivakumar",
-            "123 Street", "Telangana", "Hyderabad",
-            "500001", "9876543210"
-        );
+    public boolean isHomePageLoaded() {
+        return wait.until(ExpectedConditions.presenceOfElementLocated(homeLogo)).isDisplayed();
+    }
 
-        // 18. Verify successful registration and authenticated navigation[cite: 1]
-        Assert.assertTrue(signupLoginPage.isAccountCreated(), "Account creation failed!");
-        signupLoginPage.clickContinue();
+    public void goToSignupLogin() {
+        wait.until(ExpectedConditions.elementToBeClickable(signupLoginBtn)).click();
+    }
 
-        Assert.assertEquals(homePage.getLoggedInUsername(), "Duduri", "Logged-in username mismatch!");
+    public String getLoggedInUsername() {
+        return wait.until(ExpectedConditions.visibilityOfElementLocated(loggedInUser)).getText();
+    }
+
+    public void logout() {
+        wait.until(ExpectedConditions.elementToBeClickable(logoutBtn)).click();
     }
 }
