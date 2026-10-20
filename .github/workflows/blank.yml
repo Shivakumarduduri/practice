@@ -1,61 +1,37 @@
-package pages;
+package tests;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import java.time.Duration;
+import base.BaseTest;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+import pages.HomePage;
+import pages.SignupLoginPage;
 
-public class SignupLoginPage {
-    WebDriver driver;
-    WebDriverWait wait;
+public class RegistrationTest extends BaseTest {
 
-    private By nameField = By.cssSelector("input[data-qa='signup-name']");
-    private By emailField = By.cssSelector("input[data-qa='signup-email']");
-    private By signupBtn = By.cssSelector("button[data-qa='signup-button']");
+    @Test
+    public void verifyUserRegistrationAndLogin() {
+        HomePage homePage = new HomePage(driver);
+        SignupLoginPage signupLoginPage = new SignupLoginPage(driver);
 
-    private By titleMr = By.id("id_gender1");
-    private By passwordField = By.id("password");
-    private By firstName = By.id("first_name");
-    private By lastName = By.id("last_name");
-    private By address = By.id("address1");
-    private By state = By.id("state");
-    private By city = By.id("city");
-    private By zipcode = By.id("zipcode");
-    private By mobileNumber = By.id("mobile_number");
-    private By createAccountBtn = By.cssSelector("button[data-qa='create-account']");
-    private By accountCreatedMsg = By.cssSelector("h2[data-qa='account-created']");
-    private By continueBtn = By.cssSelector("a[data-qa='continue-button']");
+        // 16. Open the website and verify that the home page loads[cite: 1]
+        homePage.open();
+        Assert.assertTrue(homePage.isHomePageLoaded(), "Home page did not load!");
 
-    public SignupLoginPage(WebDriver driver) {
-        this.driver = driver;
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-    }
+        // 17. Navigate to Signup/Login and create a unique test account[cite: 1]
+        homePage.goToSignupLogin();
+        String uniqueEmail = "user_" + System.currentTimeMillis() + "@test.com";
+        signupLoginPage.initiateSignup("Duduri", uniqueEmail);
 
-    public void initiateSignup(String name, String email) {
-        wait.until(ExpectedConditions.visibilityOfElementLocated(nameField)).sendKeys(name);
-        driver.findElement(emailField).sendKeys(email);
-        driver.findElement(signupBtn).click();
-    }
+        signupLoginPage.fillAccountDetails(
+            "Password123", "Duduri", "Shivakumar",
+            "123 Street", "Telangana", "Hyderabad",
+            "500001", "9876543210"
+        );
 
-    public void fillAccountDetails(String pwd, String fName, String lName, String addr, String st, String cit, String zip, String mobile) {
-        wait.until(ExpectedConditions.elementToBeClickable(titleMr)).click();
-        driver.findElement(passwordField).sendKeys(pwd);
-        driver.findElement(firstName).sendKeys(fName);
-        driver.findElement(lastName).sendKeys(lName);
-        driver.findElement(address).sendKeys(addr);
-        driver.findElement(state).sendKeys(st);
-        driver.findElement(city).sendKeys(cit);
-        driver.findElement(zipcode).sendKeys(zip);
-        driver.findElement(mobileNumber).sendKeys(mobile);
-        driver.findElement(createAccountBtn).click();
-    }
+        // 18. Verify successful registration and authenticated navigation[cite: 1]
+        Assert.assertTrue(signupLoginPage.isAccountCreated(), "Account creation failed!");
+        signupLoginPage.clickContinue();
 
-    public boolean isAccountCreated() {
-        return wait.until(ExpectedConditions.visibilityOfElementLocated(accountCreatedMsg)).getText().equalsIgnoreCase("ACCOUNT CREATED!");
-    }
-
-    public void clickContinue() {
-        wait.until(ExpectedConditions.elementToBeClickable(continueBtn)).click();
+        Assert.assertEquals(homePage.getLoggedInUsername(), "Duduri", "Logged-in username mismatch!");
     }
 }
